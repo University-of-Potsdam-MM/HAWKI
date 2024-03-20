@@ -59,8 +59,14 @@
 				exit;
 			}
 
-			$filter = "(|(sAMAccountName=$username)(mail=$username))";
+			# TODO: Add flexibility, keep default value sAMAccountName
+			if (!isset($env)) {
+				$filter = "(|(sAMAccountName=$username)(mail=$username))";
+			} else {
+				$filter = "(&(uid=$username)(memberof=cn=hawki_users,ou=groups,dc=uni-potsdam,dc=de))";
+			}
 
+			# TODO: Don't search if filter is empty. No search = no bind unser required
 			$sr = ldap_search($ldapConn, $ldap_base, $filter);
 			if (!$sr) {
 				echo "LDAP search failed.";
@@ -68,9 +74,13 @@
 				exit;
 			}
 
+			# userDn: uid=$username,ou=people,dc=uni-potsdam,dc=de
+			# userAttribute: uid
+			# userTree: ou=people,dc=uni-potsdam,dc=de
 			$entryId = ldap_first_entry($ldapConn, $sr);
 			if (!$entryId) {
 				echo "Unable to get the first entry from the search results.";
+				# TODO: Wrong username / password
 				header("Location: login.php");
 				exit;
 			}
